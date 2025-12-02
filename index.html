@@ -1,1 +1,495 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TypeTrainer Kids – HTML versie</title>
+  <style>
+    :root{
+      --bg1:#ffe8f2; --bg2:#fff6d5; --bg3:#e5f2ff;
+      --text:#233143; --muted:#5b6b7a; --card:#ffffff;
+      --accent:#6c7cff; --accent2:#ff7ab6; --good:#0ea45a; --bad:#e03a3a;
+      --ring: rgba(108,124,255,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:var(--text);
+      background: radial-gradient(1200px 600px at -10% -10%,var(--bg1),transparent 60%),
+                  radial-gradient(900px 500px at 120% 0%,var(--bg2),transparent 60%),
+                  radial-gradient(1000px 700px at 50% 120%,var(--bg3),transparent 60%),
+                  #f9fbff;
+    }
+    .wrap{max-width:980px;margin:0 auto;padding:20px 16px 56px}
+    header{position:sticky;top:0;backdrop-filter:saturate(120%) blur(8px);background:rgba(255,255,255,.7); border-bottom:1px solid #e8eef8}
+    header .inner{max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:10px 16px}
+    .brand{display:flex;gap:10px;align-items:center;font-weight:800;font-size:20px}
+    .brand .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2)); display:inline-block}
+    .btn{appearance:none;border:none;border-radius:14px;padding:10px 14px;font-weight:700;cursor:pointer;
+      background:var(--accent); color:white; box-shadow:0 6px 16px rgba(108,124,255,.25);
+      transition:transform .08s ease, box-shadow .2s ease, background .2s ease}
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(1px)}
+    .btn.secondary{background:#eef2ff;color:#3a4b9f;box-shadow:none}
+    .btn.ghost{background:transparent;color:var(--text);box-shadow:none}
+
+    .grid{display:grid;gap:16px}
+    @media (min-width:860px){.grid.cols{grid-template-columns:320px 1fr}}
+
+    .card{background:var(--card);border:1px solid #e8eef8;border-radius:18px;padding:16px;box-shadow:0 8px 28px rgba(35,49,67,.04)}
+    .title{font-size:18px;font-weight:800;margin:0 0 8px}
+    .muted{color:var(--muted);font-size:13px}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .pill{display:inline-flex;gap:6px;align-items:center;background:#f1f5ff;border:1px solid #e5ebff;color:#223078;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:700}
+
+    .progress{height:10px;background:#eef3ff;border-radius:999px;position:relative;overflow:hidden}
+    .progress>i{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:999px}
+
+    /* input */
+    .input{width:100%;padding:14px 16px;border-radius:12px;border:1px solid #dfe7f2;background:white;font-size:16px}
+    .input:focus{outline:none;box-shadow:0 0 0 6px var(--ring);border-color:#bfcaf0}
+
+    /* word preview */
+    .preview{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size:28px; line-height:1.6; word-break:break-word}
+    .good{color:var(--good);font-weight:800}
+    .bad{color:var(--bad);font-weight:800}
+
+    footer{padding:36px 0;text-align:center;color:var(--muted);font-size:12px}
+
+    /* Simple shop layout */
+    .shop-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+    .price{font-size:12px;color:var(--muted)}
+
+    /* Confetti canvas overlay */
+    .confetti-wrap{position:relative}
+    .confetti{position:absolute;inset:0;pointer-events:none}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="inner">
+      <div class="brand"><span class="logo"></span> TypeTrainer Kids</div>
+      <div class="row">
+        <button class="btn secondary" id="navHome">Home</button>
+        <button class="btn secondary" id="navTrain">Train</button>
+        <button class="btn secondary" id="navShop">Shop</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div id="screenHome" class="grid cols">
+      <div class="card">
+        <h3 class="title">Jouw voortgang</h3>
+        <div class="row" style="gap:12px">
+          <span class="pill">Level <b id="levelLabel">1</b></span>
+          <span class="pill">XP <b id="xpLabel">0</b></span>
+          <span class="pill">Munten <b id="coinLabel">0</b></span>
+        </div>
+        <div style="margin-top:12px">
+          <div class="progress"><i id="xpBar" style="width:0%"></i></div>
+          <div class="muted" style="margin-top:6px">naar volgende: <b id="toNextLabel">0</b> XP</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="title">Instellingen</h3>
+        <div class="row">
+          <label class="pill">Moeilijkheid:
+            <select id="difficulty" class="input" style="width:auto;margin-left:8px">
+              <option value="1">Makkelijk (10 woorden)</option>
+              <option value="2">Matig (100 woorden)</option>
+              <option value="3">Moeilijk (200 woorden)</option>
+            </select>
+          </label>
+        </div>
+        <div class="muted" style="margin-top:6px">Fout = fout. Geen backspace. Je gaat door naar het volgende woord wanneer alle letters getypt zijn.</div>
+        <div style="margin-top:12px" class="row">
+          <button class="btn" id="startFromHome">Start trainen</button>
+          <button class="btn ghost" id="goShopFromHome">Naar shop</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="title">Jouw mannetje</h3>
+        <canvas id="avatarHome" width="280" height="220" aria-label="avatar"></canvas>
+        <div class="muted">Gekozen outfit en kleuren worden ook gebruikt in de training.</div>
+      </div>
+    </div>
+
+    <div id="screenTrain" class="grid" style="display:none">
+      <div class="card confetti-wrap">
+        <h3 class="title">Typ dit woord precies:</h3>
+        <div id="wordCounter" class="muted" style="margin-bottom:8px">Woord 1/10</div>
+        <div class="progress" aria-label="voortgang"><i id="taskBar" style="width:0%"></i></div>
+        <div id="preview" class="preview" style="margin-top:12px"></div>
+        <div style="margin-top:12px">
+          <input id="typeBox" class="input" placeholder="Begin te typen..." autocomplete="off" inputmode="latin" />
+        </div>
+        <div class="row" style="margin-top:10px"><span class="pill">Munten: <b id="coinsDuringTrain">0</b></span></div>
+
+        <canvas id="avatarTrain" width="220" height="180" style="margin-top:12px"></canvas>
+        <canvas id="confetti" class="confetti" width="900" height="350"></canvas>
+
+        <div id="donePanel" class="card" style="display:none;margin-top:12px;background:#ecfff3;border-color:#c6f5d3">
+          <div class="title">Opdracht klaar! 🌟</div>
+          <div>Je verdiende <b id="earnedXP">0</b> XP en <b id="earnedCoins">0</b> munten.</div>
+          <div class="row" style="margin-top:10px">
+            <button class="btn" id="againBtn">Nog eens</button>
+            <button class="btn secondary" id="toHomeBtn">Naar home</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="screenShop" class="grid" style="display:none">
+      <div class="card">
+        <h3 class="title">Shop – simpel</h3>
+        <div class="row" style="margin-bottom:8px">
+          <span class="pill">Munten: <b id="coinsShop">0</b></span>
+        </div>
+        <div class="shop-grid">
+          <div class="card">
+            <div class="title">T‑shirt kleur (50)</div>
+            <input id="shirtHue" type="range" min="0" max="360" value="210" class="input" />
+            <div class="row" style="margin-top:8px">
+              <button class="btn" id="buyShirtColor">Bevestig kleur – 50</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="title">Broek kleur (50)</div>
+            <input id="pantsHue" type="range" min="0" max="360" value="210" class="input" />
+            <div class="row" style="margin-top:8px">
+              <button class="btn" id="buyPantsColor">Bevestig kleur – 50</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="title">Huidskleur (50)</div>
+            <input id="skinHue" type="range" min="0" max="360" value="35" class="input" />
+            <div class="row" style="margin-top:8px">
+              <button class="btn" id="buySkinColor">Bevestig kleur – 50</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="title">Hoed (100)</div>
+            <div class="price">Koop 1x om te ontgrendelen, daarna aan/uit zetten.</div>
+            <div class="row" style="margin-top:8px">
+              <button class="btn" id="buyHat">Koop hoed – 100</button>
+              <button class="btn secondary" id="toggleHat">Hoed aan/uit</button>
+            </div>
+          </div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn secondary" id="backFromShop">Terug</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="title">Voorbeeld</h3>
+        <canvas id="avatarShop" width="280" height="220"></canvas>
+        <div class="muted">Wijzigingen na aankoop zijn meteen zichtbaar en blijven bewaard.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>© <span id="year"></span> TypeTrainer Kids</footer>
+
+  <script>
+  // ---------- Persistentie ----------
+  const STORAGE_KEY = 'ttk_profile_shop_v1';
+  const defaultProfile = {
+    xp:0, coins:0, difficulty:1,
+    avatar:{ shirtHue:210, pantsHue:220, skinHue:35, hatUnlocked:false, hatOn:false }
+  };
+  function loadProfile(){ try{ const raw=localStorage.getItem(STORAGE_KEY); return raw? {...defaultProfile, ...JSON.parse(raw)}: defaultProfile }catch{ return defaultProfile } }
+  function saveProfile(p){ localStorage.setItem(STORAGE_KEY, JSON.stringify(p)) }
+  let profile = loadProfile();
+
+  // ---------- XP & Level ----------
+  function clamp(n,a,b){ return Math.max(a, Math.min(b,n)) }
+  function levelInfo(totalXP){
+    const x = totalXP/100; // ~100 XP per level (versimpeld)
+    const lvl = Math.floor((Math.sqrt(1+8*x)-1)/2)+1;
+    const prev = ((lvl-1)*(lvl-0))/2*100, next = (lvl*(lvl+1))/2*100;
+    const inLevel = clamp(totalXP - prev, 0, next-prev);
+    return { level:lvl, pct: (inLevel/(next-prev))*100, toNext: clamp(next-totalXP,0,next-prev) };
+  }
+
+  // ---------- DOM refs ----------
+  const screenHome = document.getElementById('screenHome');
+  const screenTrain = document.getElementById('screenTrain');
+  const screenShop = document.getElementById('screenShop');
+  const levelLabel = document.getElementById('levelLabel');
+  const xpLabel = document.getElementById('xpLabel');
+  const coinLabel = document.getElementById('coinLabel');
+  const xpBar = document.getElementById('xpBar');
+  const toNextLabel = document.getElementById('toNextLabel');
+  const difficultySel = document.getElementById('difficulty');
+
+  const wordCounter = document.getElementById('wordCounter');
+  const taskBar = document.getElementById('taskBar');
+  const preview = document.getElementById('preview');
+  const typeBox = document.getElementById('typeBox');
+  const donePanel = document.getElementById('donePanel');
+  const earnedXP = document.getElementById('earnedXP');
+  const earnedCoins = document.getElementById('earnedCoins');
+  const coinsDuringTrain = document.getElementById('coinsDuringTrain');
+
+  const coinsShop = document.getElementById('coinsShop');
+  const avatarHome = document.getElementById('avatarHome');
+  const avatarTrain = document.getElementById('avatarTrain');
+  const avatarShop = document.getElementById('avatarShop');
+  const confettiCanvas = document.getElementById('confetti');
+
+  const shirtHue = document.getElementById('shirtHue');
+  const pantsHue = document.getElementById('pantsHue');
+  const skinHue = document.getElementById('skinHue');
+
+  document.getElementById('navHome').onclick = () => showScreen('home');
+  document.getElementById('navTrain').onclick = () => startTraining();
+  document.getElementById('navShop').onclick = () => showScreen('shop');
+  document.getElementById('startFromHome').onclick = () => startTraining();
+  document.getElementById('goShopFromHome').onclick = () => showScreen('shop');
+  document.getElementById('backFromShop').onclick = () => showScreen('home');
+  document.addEventListener('click', (e)=>{
+    if(e.target && e.target.id==='againBtn') startTraining();
+    if(e.target && e.target.id==='toHomeBtn') showScreen('home');
+  });
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  difficultySel.value = String(profile.difficulty);
+  difficultySel.onchange = (e)=>{ profile.difficulty = +e.target.value; saveProfile(profile); refreshHome(); }
+
+  function refreshHome(){
+    const {level, pct, toNext} = levelInfo(profile.xp);
+    levelLabel.textContent = level; xpLabel.textContent = profile.xp; coinLabel.textContent = profile.coins||0;
+    xpBar.style.width = pct.toFixed(1)+'%'; toNextLabel.textContent = toNext;
+    drawAvatar(avatarHome.getContext('2d'), 280, 220);
+  }
+
+  function showScreen(name){
+    screenHome.style.display = (name==='home')? 'grid':'none';
+    screenTrain.style.display = (name==='train')? 'grid':'none';
+    screenShop.style.display = (name==='shop')? 'grid':'none';
+    if(name==='home') refreshHome();
+    if(name==='shop'){ coinsShop.textContent = profile.coins||0; drawAvatar(avatarShop.getContext('2d'), 280, 220); syncSliders(); }
+  }
+
+  // ---------- Woordenbank ----------
+  const WORDS = [ 'boom','bos','bal','fiets','kat','hond','muis','huis','appel','peer','bloem','water','regen','zon','maan','ster','school','klas','vriend','toets','spelen','springen','lopen','rust','muziek','ritme','kijken','leren','groen','rood','blauw','letter','woord','schrijven','lezen','trainer','dans','lach','pret','droom','vrolijk','snel','traag','licht','donker','speel','balon' ];
+  const randWord = () => WORDS[Math.floor(Math.random()*WORDS.length)];
+
+  // ---------- Training logica (fout = fout, geen backspace) ----------
+  let taskWords=[], idx=0, typed='', correctWords=0, wrongWords=0, finished=false;
+  let baseXP=0;
+
+  function startTraining(){
+    showScreen('train');
+    const amount = profile.difficulty===1?10: profile.difficulty===2?100:200;
+    baseXP = profile.difficulty===1?5: profile.difficulty===2?50:100;
+    taskWords = Array.from({length:amount}, randWord);
+    idx = 0; typed=''; correctWords=0; wrongWords=0; finished=false;
+    donePanel.style.display='none';
+    typeBox.value='';
+    wordCounter.textContent = `Woord 1/${taskWords.length}`;
+    taskBar.style.width = '0%';
+    renderPreview();
+    typeBox.focus();
+    coinsDuringTrain.textContent = profile.coins||0;
+    drawAvatar(avatarTrain.getContext('2d'), 220, 180);
+    clearConfetti();
+  }
+
+  function renderPreview(){
+    const target = taskWords[idx] || '';
+    const parts = [];
+    for(let i=0;i<target.length;i++){
+      const ch = target[i]; const t = typed[i];
+      let cls=''; if(t!=null){ cls = (t===ch)?'good':'bad' }
+      parts.push(`<span class="${cls}">${escapeHtml(ch)}</span>`);
+    }
+    preview.innerHTML = parts.join('');
+    wordCounter.textContent = `Woord ${Math.min(idx+1, taskWords.length)}/${taskWords.length}`;
+    taskBar.style.width = Math.round((idx/taskWords.length)*100)+'%';
+  }
+
+  // Blokkeer backspace, delete, pijlen, paste, selecties
+  typeBox.addEventListener('beforeinput', (e)=>{
+    if(e.inputType && (e.inputType.startsWith('delete') || e.inputType.includes('Paste'))) e.preventDefault();
+  });
+  typeBox.addEventListener('keydown', (e)=>{
+    const block = ['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'];
+    if(block.includes(e.key)) { e.preventDefault(); return; }
+    if(finished) { e.preventDefault(); return; }
+    if(e.key.length===1){ // zichtbare char
+      const target = taskWords[idx];
+      if(typed.length < target.length){
+        typed += e.key;
+        e.preventDefault();
+        typeBox.value = typed; // houd caret op einde
+        renderPreview();
+        if(typed.length === target.length){
+          // woord klaar → al dan niet correct
+          if(typed === target){
+            correctWords++;
+            celebrate();
+          } else {
+            wrongWords++;
+            avatarNudge(avatarTrain.getContext('2d'), 220, 180);
+          }
+          // naar volgende woord
+          idx++;
+          typed='';
+          typeBox.value='';
+          if(idx >= taskWords.length){ finishTask(); }
+          else { renderPreview(); }
+        }
+      } else {
+        e.preventDefault();
+      }
+    } else if(e.key==='Enter'){
+      e.preventDefault(); // enter doet niets
+    }
+  });
+  typeBox.addEventListener('paste', e=> e.preventDefault());
+
+  function finishTask(){
+    finished = true;
+    taskBar.style.width = '100%';
+    // XP berekening: basis +1 per juist woord, -3 per woord met min. 1 fout
+    const gained = baseXP + (correctWords * 1) + (wrongWords * -3);
+    const coins = Math.floor(correctWords / 2);
+    profile.xp = (profile.xp || 0) + gained;
+    profile.coins = (profile.coins || 0) + coins;
+    saveProfile(profile);
+
+    earnedXP.textContent = String(gained);
+    earnedCoins.textContent = String(coins);
+    donePanel.style.display='block';
+    coinLabel.textContent = profile.coins||0;
+  }
+
+  function escapeHtml(s){ return s.replace(/[&<>\"]/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','\'>':'&gt;','\"':'&quot;'}[c]) ) }
+
+  // ---------- Simpel mannetje tekenen ----------
+  function drawAvatar(ctx, w, h){
+    const {shirtHue, pantsHue, skinHue, hatOn} = profile.avatar;
+    ctx.clearRect(0,0,w,h);
+
+    // ondergrond
+    ctx.fillStyle = '#eaf2ff';
+    ctx.fillRect(0,h-20,w,20);
+
+    // lichaam
+    const skin = `hsl(${skinHue} 55% 70%)`;
+    const shirt = `hsl(${shirtHue} 70% 45%)`;
+    const pants = `hsl(${pantsHue} 40% 35%)`;
+
+    // benen
+    ctx.fillStyle = pants; ctx.fillRect(w/2-18, h-70, 10, 50); ctx.fillRect(w/2+8, h-70, 10, 50);
+    // romp
+    ctx.fillStyle = shirt; ctx.fillRect(w/2-28, h-120, 56, 55); // shirt
+    // armen
+    ctx.fillStyle = skin; ctx.fillRect(w/2-40, h-115, 12, 40); ctx.fillRect(w/2+28, h-115, 12, 40);
+    // hoofd
+    ctx.beginPath(); ctx.arc(w/2, h-145, 18, 0, Math.PI*2); ctx.fillStyle = skin; ctx.fill();
+    // ogen
+    ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(w/2-6, h-150, 2.8, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(w/2+6, h-150, 2.8, 0, Math.PI*2); ctx.fill();
+    // mond
+    ctx.strokeStyle = '#222'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(w/2, h-145, 8, 0.15*Math.PI, 0.85*Math.PI); ctx.stroke();
+    // hoed
+    if(hatOn){ ctx.fillStyle = '#333'; ctx.fillRect(w/2-22, h-166, 44, 10); ctx.fillStyle = '#555'; ctx.fillRect(w/2-16, h-178, 32, 12); }
+  }
+  function avatarNudge(ctx, w, h){
+    // klein schud-animatie bij fout
+    let t = 0; const start = performance.now();
+    const orig = ctx.getImageData(0,0,w,h);
+    function step(now){
+      t = (now-start);
+      const dx = Math.sin(t*0.05)*2;
+      ctx.putImageData(orig, dx, 0);
+      if(t<220) requestAnimationFrame(step); else drawAvatar(ctx,w,h);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // ---------- Confetti ----------
+  const confCtx = confettiCanvas.getContext('2d');
+  let confetti = [];
+  function clearConfetti(){ confetti=[]; confCtx.clearRect(0,0,confettiCanvas.width, confettiCanvas.height); }
+  function celebrate(){
+    // spawn wat deeltjes
+    for(let i=0;i<25;i++){
+      confetti.push({
+        x: Math.random()*confettiCanvas.width,
+        y: 40+Math.random()*60,
+        vx: (Math.random()-0.5)*2,
+        vy: -Math.random()*3-2,
+        g: 0.08+Math.random()*0.04,
+        s: 4+Math.random()*4,
+        life: 80+Math.random()*40,
+        hue: Math.floor(Math.random()*360)
+      });
+    }
+  }
+  function confettiLoop(){
+    confCtx.clearRect(0,0,confettiCanvas.width, confettiCanvas.height);
+    confetti = confetti.filter(p=> p.life>0);
+    for(const p of confetti){
+      p.life--; p.vy += p.g; p.x += p.vx; p.y += p.vy;
+      confCtx.fillStyle = `hsl(${p.hue} 80% 60%)`;
+      confCtx.fillRect(p.x,p.y,p.s,p.s);
+    }
+    requestAnimationFrame(confettiLoop);
+  }
+  confettiLoop();
+
+  // ---------- SHOP ----------
+  function syncSliders(){
+    shirtHue.value = profile.avatar.shirtHue;
+    pantsHue.value = profile.avatar.pantsHue;
+    skinHue.value = profile.avatar.skinHue;
+  }
+
+  document.getElementById('buyShirtColor').onclick = ()=> buyColor('shirtHue');
+  document.getElementById('buyPantsColor').onclick = ()=> buyColor('pantsHue');
+  document.getElementById('buySkinColor').onclick = ()=> buyColor('skinHue');
+  document.getElementById('buyHat').onclick = ()=>{
+    if(profile.avatar.hatUnlocked) return; // al gekocht
+    if((profile.coins||0) < 100) { flashCoins(); return; }
+    profile.coins -= 100; profile.avatar.hatUnlocked = true; profile.avatar.hatOn = true;
+    saveProfile(profile); coinsShop.textContent = profile.coins||0; coinLabel.textContent = profile.coins||0; redrawAllAvatars();
+  };
+  document.getElementById('toggleHat').onclick = ()=>{
+    if(!profile.avatar.hatUnlocked) return; profile.avatar.hatOn = !profile.avatar.hatOn; saveProfile(profile); redrawAllAvatars();
+  };
+
+  function buyColor(key){
+    const slider = (key==='shirtHue')? shirtHue : (key==='pantsHue')? pantsHue : skinHue;
+    if((profile.coins||0) < 50) { flashCoins(); return; }
+    profile.coins -= 50; profile.avatar[key] = +slider.value; saveProfile(profile);
+    coinsShop.textContent = profile.coins||0; coinLabel.textContent = profile.coins||0;
+    redrawAllAvatars();
+  }
+
+  function redrawAllAvatars(){
+    drawAvatar(avatarHome.getContext('2d'), 280, 220);
+    drawAvatar(avatarShop.getContext('2d'), 280, 220);
+    drawAvatar(avatarTrain.getContext('2d'), 220, 180);
+  }
+
+  function flashCoins(){
+    // kleine feedback als onvoldoende munten
+    const elms = [coinLabel, coinsShop];
+    elms.forEach(el=>{ if(!el) return; el.style.transition='transform .15s'; el.style.transform='scale(1.15)'; setTimeout(()=> el.style.transform='scale(1)', 160); });
+  }
+
+  // Init
+  document.getElementById('year').textContent = new Date().getFullYear();
+  refreshHome();
+  showScreen('home');
+  redrawAllAvatars();
+  </script>
+</body>
+</html>
 
