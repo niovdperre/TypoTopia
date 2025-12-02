@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TypeTrainer Kids – HTML versie</title>
+  <title>TypeTrainer Kids â€“ Shop + Avatar</title>
   <style>
     :root{
       --bg1:#ffe8f2; --bg2:#fff6d5; --bg3:#e5f2ff;
@@ -64,6 +64,10 @@
     /* Confetti canvas overlay */
     .confetti-wrap{position:relative}
     .confetti{position:absolute;inset:0;pointer-events:none}
+
+    /* small helpers */
+    .hidden { display:none; }
+    .color-input { margin-top:8px; height:36px; padding:2px; border-radius:8px; border:1px solid #ddd; }
   </style>
 </head>
 <body>
@@ -133,7 +137,7 @@
         <canvas id="confetti" class="confetti" width="900" height="350"></canvas>
 
         <div id="donePanel" class="card" style="display:none;margin-top:12px;background:#ecfff3;border-color:#c6f5d3">
-          <div class="title">Opdracht klaar! 🌟</div>
+          <div class="title">Opdracht klaar! ðŸŒŸ</div>
           <div>Je verdiende <b id="earnedXP">0</b> XP en <b id="earnedCoins">0</b> munten.</div>
           <div class="row" style="margin-top:10px">
             <button class="btn" id="againBtn">Nog eens</button>
@@ -145,45 +149,57 @@
 
     <div id="screenShop" class="grid" style="display:none">
       <div class="card">
-        <h3 class="title">Shop – simpel</h3>
+        <h3 class="title">Shop â€“ simpel (koop eerst, dan kleurkiezer)</h3>
         <div class="row" style="margin-bottom:8px">
           <span class="pill">Munten: <b id="coinsShop">0</b></span>
         </div>
         <div class="shop-grid">
+          <!-- Shirt kleur: koop ontgrendelt kleurkiezer -->
           <div class="card">
-            <div class="title">T‑shirt kleur (50)</div>
-            <input id="shirtHue" type="range" min="0" max="360" value="210" class="input" />
+            <div class="title">T-shirt kleur (50)</div>
+            <div class="price">Koop om de kleurkiezer te ontgrendelen (50 munten). Daarna gratis aanpassen.</div>
             <div class="row" style="margin-top:8px">
-              <button class="btn" id="buyShirtColor">Bevestig kleur – 50</button>
+              <button class="btn" id="buyShirtColor">Koop Shirtkleur â€“ 50</button>
+              <input id="shirtColorPicker" type="color" class="color-input hidden" />
             </div>
           </div>
+
+          <!-- Broek kleur -->
           <div class="card">
             <div class="title">Broek kleur (50)</div>
-            <input id="pantsHue" type="range" min="0" max="360" value="210" class="input" />
+            <div class="price">Koop om de kleurkiezer te ontgrendelen (50 munten). Daarna gratis aanpassen.</div>
             <div class="row" style="margin-top:8px">
-              <button class="btn" id="buyPantsColor">Bevestig kleur – 50</button>
+              <button class="btn" id="buyPantsColor">Koop Broekkleur â€“ 50</button>
+              <input id="pantsColorPicker" type="color" class="color-input hidden" />
             </div>
           </div>
+
+          <!-- Huidskleur -->
           <div class="card">
             <div class="title">Huidskleur (50)</div>
-            <input id="skinHue" type="range" min="0" max="360" value="35" class="input" />
+            <div class="price">Koop om de kleurkiezer te ontgrendelen (50 munten). Daarna gratis aanpassen.</div>
             <div class="row" style="margin-top:8px">
-              <button class="btn" id="buySkinColor">Bevestig kleur – 50</button>
+              <button class="btn" id="buySkinColor">Koop Huidskleur â€“ 50</button>
+              <input id="skinColorPicker" type="color" class="color-input hidden" />
             </div>
           </div>
+
+          <!-- Hoed -->
           <div class="card">
             <div class="title">Hoed (100)</div>
             <div class="price">Koop 1x om te ontgrendelen, daarna aan/uit zetten.</div>
             <div class="row" style="margin-top:8px">
-              <button class="btn" id="buyHat">Koop hoed – 100</button>
+              <button class="btn" id="buyHat">Koop Hoed â€“ 100</button>
               <button class="btn secondary" id="toggleHat">Hoed aan/uit</button>
             </div>
           </div>
         </div>
+
         <div class="row" style="margin-top:12px">
           <button class="btn secondary" id="backFromShop">Terug</button>
         </div>
       </div>
+
       <div class="card">
         <h3 class="title">Voorbeeld</h3>
         <canvas id="avatarShop" width="280" height="220"></canvas>
@@ -192,14 +208,16 @@
     </div>
   </div>
 
-  <footer>© <span id="year"></span> TypeTrainer Kids</footer>
+  <footer>Â© <span id="year"></span> TypeTrainer Kids</footer>
 
   <script>
   // ---------- Persistentie ----------
-  const STORAGE_KEY = 'ttk_profile_shop_v1';
+  const STORAGE_KEY = 'ttk_profile_shop_v2';
   const defaultProfile = {
     xp:0, coins:0, difficulty:1,
-    avatar:{ shirtHue:210, pantsHue:220, skinHue:35, hatUnlocked:false, hatOn:false }
+    // kleuren in hex; unlocked flags for color pickers
+    avatar:{ shirtColor:'#2a6cff', pantsColor:'#2a2a2a', skinColor:'#f0c8a0', hatUnlocked:false, hatOn:false,
+             unlocks:{ shirt:false, pants:false, skin:false } }
   };
   function loadProfile(){ try{ const raw=localStorage.getItem(STORAGE_KEY); return raw? {...defaultProfile, ...JSON.parse(raw)}: defaultProfile }catch{ return defaultProfile } }
   function saveProfile(p){ localStorage.setItem(STORAGE_KEY, JSON.stringify(p)) }
@@ -241,9 +259,10 @@
   const avatarShop = document.getElementById('avatarShop');
   const confettiCanvas = document.getElementById('confetti');
 
-  const shirtHue = document.getElementById('shirtHue');
-  const pantsHue = document.getElementById('pantsHue');
-  const skinHue = document.getElementById('skinHue');
+  // shop inputs (color pickers)
+  const shirtColorPicker = document.getElementById('shirtColorPicker');
+  const pantsColorPicker = document.getElementById('pantsColorPicker');
+  const skinColorPicker  = document.getElementById('skinColorPicker');
 
   document.getElementById('navHome').onclick = () => showScreen('home');
   document.getElementById('navTrain').onclick = () => startTraining();
@@ -272,7 +291,7 @@
     screenTrain.style.display = (name==='train')? 'grid':'none';
     screenShop.style.display = (name==='shop')? 'grid':'none';
     if(name==='home') refreshHome();
-    if(name==='shop'){ coinsShop.textContent = profile.coins||0; drawAvatar(avatarShop.getContext('2d'), 280, 220); syncSliders(); }
+    if(name==='shop'){ coinsShop.textContent = profile.coins||0; drawAvatar(avatarShop.getContext('2d'), 280, 220); syncColorPickers(); renderShopUI(); }
   }
 
   // ---------- Woordenbank ----------
@@ -329,7 +348,7 @@
         typeBox.value = typed; // houd caret op einde
         renderPreview();
         if(typed.length === target.length){
-          // woord klaar → al dan niet correct
+          // woord klaar â†’ al dan niet correct
           if(typed === target){
             correctWords++;
             celebrate();
@@ -369,21 +388,21 @@
     coinLabel.textContent = profile.coins||0;
   }
 
-  function escapeHtml(s){ return s.replace(/[&<>\"]/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','\'>':'&gt;','\"':'&quot;'}[c]) ) }
+  function escapeHtml(s){ return s.replace(/[&<>\"]/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]) ) }
 
-  // ---------- Simpel mannetje tekenen ----------
+  // ---------- Simpel mannetje tekenen (met hex kleuren) ----------
   function drawAvatar(ctx, w, h){
-    const {shirtHue, pantsHue, skinHue, hatOn} = profile.avatar;
+    const {shirtColor, pantsColor, skinColor, hatUnlocked, hatOn, unlocks} = profile.avatar;
     ctx.clearRect(0,0,w,h);
 
     // ondergrond
     ctx.fillStyle = '#eaf2ff';
     ctx.fillRect(0,h-20,w,20);
 
-    // lichaam
-    const skin = `hsl(${skinHue} 55% 70%)`;
-    const shirt = `hsl(${shirtHue} 70% 45%)`;
-    const pants = `hsl(${pantsHue} 40% 35%)`;
+    // kleuren (hex strings)
+    const skin = profile.avatar.skinColor || '#f0c8a0';
+    const shirt = profile.avatar.shirtColor || '#2a6cff';
+    const pants = profile.avatar.pantsColor || '#2a2a2a';
 
     // benen
     ctx.fillStyle = pants; ctx.fillRect(w/2-18, h-70, 10, 50); ctx.fillRect(w/2+8, h-70, 10, 50);
@@ -398,7 +417,9 @@
     // mond
     ctx.strokeStyle = '#222'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(w/2, h-145, 8, 0.15*Math.PI, 0.85*Math.PI); ctx.stroke();
     // hoed
-    if(hatOn){ ctx.fillStyle = '#333'; ctx.fillRect(w/2-22, h-166, 44, 10); ctx.fillStyle = '#555'; ctx.fillRect(w/2-16, h-178, 32, 12); }
+    if(profile.avatar.hatOn){
+      ctx.fillStyle = '#333'; ctx.fillRect(w/2-22, h-166, 44, 10); ctx.fillStyle = '#555'; ctx.fillRect(w/2-16, h-178, 32, 12);
+    }
   }
   function avatarNudge(ctx, w, h){
     // klein schud-animatie bij fout
@@ -444,52 +465,160 @@
   }
   confettiLoop();
 
-  // ---------- SHOP ----------
-  function syncSliders(){
-    shirtHue.value = profile.avatar.shirtHue;
-    pantsHue.value = profile.avatar.pantsHue;
-    skinHue.value = profile.avatar.skinHue;
+  // ---------- SHOP behavior (unlock -> color-picker appears) ----------
+  function syncColorPickers(){
+    // set color pickers to current profile colors (if unlocked show them)
+    if(profile.avatar.unlocks.shirt){
+      shirtColorPicker.classList.remove('hidden');
+      shirtColorPicker.value = profile.avatar.shirtColor || '#2a6cff';
+    } else {
+      shirtColorPicker.classList.add('hidden');
+    }
+    if(profile.avatar.unlocks.pants){
+      pantsColorPicker.classList.remove('hidden');
+      pantsColorPicker.value = profile.avatar.pantsColor || '#2a2a2a';
+    } else {
+      pantsColorPicker.classList.add('hidden');
+    }
+    if(profile.avatar.unlocks.skin){
+      skinColorPicker.classList.remove('hidden');
+      skinColorPicker.value = profile.avatar.skinColor || '#f0c8a0';
+    } else {
+      skinColorPicker.classList.add('hidden');
+    }
   }
 
-  document.getElementById('buyShirtColor').onclick = ()=> buyColor('shirtHue');
-  document.getElementById('buyPantsColor').onclick = ()=> buyColor('pantsHue');
-  document.getElementById('buySkinColor').onclick = ()=> buyColor('skinHue');
+  function renderShopUI(){
+    coinsShop.textContent = profile.coins||0;
+    // Buttons state: disable buy if not enough coins
+    document.getElementById('buyShirtColor').disabled = profile.avatar.unlocks.shirt || (profile.coins < 50);
+    document.getElementById('buyPantsColor').disabled = profile.avatar.unlocks.pants || (profile.coins < 50);
+    document.getElementById('buySkinColor').disabled  = profile.avatar.unlocks.skin  || (profile.coins < 50);
+    document.getElementById('buyHat').disabled = profile.avatar.hatUnlocked || (profile.coins < 100);
+    // toggleHat button disabled if not purchased
+    document.getElementById('toggleHat').disabled = !profile.avatar.hatUnlocked;
+  }
+
+  // buy handlers: deduct once, set unlocked flag, reveal color-picker
+  document.getElementById('buyShirtColor').onclick = ()=>{
+    if(profile.avatar.unlocks.shirt) return;
+    if((profile.coins||0) < 50){ flashCoins(); return; }
+    profile.coins -= 50;
+    profile.avatar.unlocks.shirt = true;
+    // set default color from picker if present
+    profile.avatar.shirtColor = shirtColorPicker.value || profile.avatar.shirtColor;
+    saveProfile(profile);
+    syncColorPickers(); renderShopUI(); redrawAllAvatars(); refreshHome();
+  };
+  document.getElementById('buyPantsColor').onclick = ()=>{
+    if(profile.avatar.unlocks.pants) return;
+    if((profile.coins||0) < 50){ flashCoins(); return; }
+    profile.coins -= 50;
+    profile.avatar.unlocks.pants = true;
+    profile.avatar.pantsColor = pantsColorPicker.value || profile.avatar.pantsColor;
+    saveProfile(profile);
+    syncColorPickers(); renderShopUI(); redrawAllAvatars(); refreshHome();
+  };
+  document.getElementById('buySkinColor').onclick = ()=>{
+    if(profile.avatar.unlocks.skin) return;
+    if((profile.coins||0) < 50){ flashCoins(); return; }
+    profile.coins -= 50;
+    profile.avatar.unlocks.skin = true;
+    profile.avatar.skinColor = skinColorPicker.value || profile.avatar.skinColor;
+    saveProfile(profile);
+    syncColorPickers(); renderShopUI(); redrawAllAvatars(); refreshHome();
+  };
+
+  // hat buy / toggle
   document.getElementById('buyHat').onclick = ()=>{
-    if(profile.avatar.hatUnlocked) return; // al gekocht
-    if((profile.coins||0) < 100) { flashCoins(); return; }
-    profile.coins -= 100; profile.avatar.hatUnlocked = true; profile.avatar.hatOn = true;
-    saveProfile(profile); coinsShop.textContent = profile.coins||0; coinLabel.textContent = profile.coins||0; redrawAllAvatars();
+    if(profile.avatar.hatUnlocked) return;
+    if((profile.coins||0) < 100){ flashCoins(); return; }
+    profile.coins -= 100;
+    profile.avatar.hatUnlocked = true;
+    profile.avatar.hatOn = true;
+    saveProfile(profile);
+    renderShopUI(); redrawAllAvatars(); refreshHome();
   };
   document.getElementById('toggleHat').onclick = ()=>{
-    if(!profile.avatar.hatUnlocked) return; profile.avatar.hatOn = !profile.avatar.hatOn; saveProfile(profile); redrawAllAvatars();
+    if(!profile.avatar.hatUnlocked) return;
+    profile.avatar.hatOn = !profile.avatar.hatOn;
+    saveProfile(profile);
+    redrawAllAvatars();
   };
 
-  function buyColor(key){
-    const slider = (key==='shirtHue')? shirtHue : (key==='pantsHue')? pantsHue : skinHue;
-    if((profile.coins||0) < 50) { flashCoins(); return; }
-    profile.coins -= 50; profile.avatar[key] = +slider.value; saveProfile(profile);
-    coinsShop.textContent = profile.coins||0; coinLabel.textContent = profile.coins||0;
+  // color pickers change handlers (free, unlimited)
+  shirtColorPicker.addEventListener('input', (e)=>{
+    if(!profile.avatar.unlocks.shirt) return;
+    profile.avatar.shirtColor = e.target.value;
+    saveProfile(profile);
     redrawAllAvatars();
-  }
+  });
+  pantsColorPicker.addEventListener('input', (e)=>{
+    if(!profile.avatar.unlocks.pants) return;
+    profile.avatar.pantsColor = e.target.value;
+    saveProfile(profile);
+    redrawAllAvatars();
+  });
+  skinColorPicker.addEventListener('input', (e)=>{
+    if(!profile.avatar.unlocks.skin) return;
+    profile.avatar.skinColor = e.target.value;
+    saveProfile(profile);
+    redrawAllAvatars();
+  });
 
   function redrawAllAvatars(){
     drawAvatar(avatarHome.getContext('2d'), 280, 220);
     drawAvatar(avatarShop.getContext('2d'), 280, 220);
     drawAvatar(avatarTrain.getContext('2d'), 220, 180);
+    coinsShop.textContent = profile.coins||0;
+    coinLabel.textContent = profile.coins||0;
   }
 
   function flashCoins(){
     // kleine feedback als onvoldoende munten
     const elms = [coinLabel, coinsShop];
-    elms.forEach(el=>{ if(!el) return; el.style.transition='transform .15s'; el.style.transform='scale(1.15)'; setTimeout(()=> el.style.transform='scale(1)', 160); });
+    elms.forEach(el=>{ if(!el) return; el.style.transition='transform .15s'; el.style.transform='scale(1.12)'; setTimeout(()=> el.style.transform='scale(1)', 160); });
   }
 
-  // Init
-  document.getElementById('year').textContent = new Date().getFullYear();
-  refreshHome();
+  // Init: apply saved profile values to UI
+  function initUI(){
+    // If old keys exist (hue), try to migrate them to hex (best-effort)
+    if(profile.avatar.shirtHue && !profile.avatar.shirtColor){
+      profile.avatar.shirtColor = `hsl(${profile.avatar.shirtHue} 70% 45%)`;
+      delete profile.avatar.shirtHue;
+    }
+    if(profile.avatar.pantsHue && !profile.avatar.pantsColor){
+      profile.avatar.pantsColor = `hsl(${profile.avatar.pantsHue} 40% 35%)`;
+      delete profile.avatar.pantsHue;
+    }
+    if(profile.avatar.skinHue && !profile.avatar.skinColor){
+      profile.avatar.skinColor = `hsl(${profile.avatar.skinHue} 55% 70%)`;
+      delete profile.avatar.skinHue;
+    }
+    // ensure unlocks object exists
+    profile.avatar.unlocks = profile.avatar.unlocks || { shirt:false, pants:false, skin:false };
+    // set color pickers initial state
+    syncColorPickers();
+    renderShopUI();
+    redrawAllAvatars();
+    refreshHome();
+  }
+
+  // Init run
+  initUI();
+
+  // small helpers used earlier
+  function escapeHtmlSimple(s){ return (''+s).replace(/[&<>\"]/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]) ) }
+
+  // Reuse earlier confetti/training behavior already implemented above.
+
+  // Expose functions used by UI nav
+  function startTrainingPublic(){ startTraining(); }
+  window.startTraining = startTrainingPublic;
+  window.showScreen = showScreen;
+
+  // done: make sure Home shows correctly at load
   showScreen('home');
-  redrawAllAvatars();
   </script>
 </body>
 </html>
-
